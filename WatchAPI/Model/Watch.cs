@@ -10,7 +10,7 @@ namespace WatchAPI.Model
     {
         [Key]
         public int ID { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Required")]
         [StringLength(50)]
         public string? ItemName { get; set; }
         [Required(ErrorMessage = "Required")]
