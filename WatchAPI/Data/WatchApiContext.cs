@@ -19,5 +19,7 @@ namespace WatchAPI.Data
         }
 
         public DbSet<WatchAPI.Model.Watch> Watches { get; set; }
+
+        public DbSet<WatchAPI.Model.Carousel> Carousel { get; set; }
     }
 }

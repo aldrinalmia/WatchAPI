@@ -1,8 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Drawing;
+using System.Text.Json.Serialization;
 
 namespace WatchAPI.Model
 {
+    [Table("Watches")]
     public class Watch
     {
         [Key]
@@ -15,10 +18,8 @@ namespace WatchAPI.Model
         [StringLength(50)]
         public string? ItemNumber { get; set; }
         [Required]
-        [StringLength(50)]
         public string? ShortDescription { get; set; }
         [Required]
-        [StringLength(100)]
         public string? FullDescription { get; set; }
         [Required]
         public decimal Price { get; set; }
@@ -29,7 +30,6 @@ namespace WatchAPI.Model
         [StringLength(50)]
         public string? Movement { get; set; }
         [Required]
-        [StringLength(50)]
         public string? Chronograph { get; set; }
         [Required]
         public decimal Weight { get; set; }
@@ -48,6 +48,7 @@ namespace WatchAPI.Model
         [StringLength(30)]
         public string? StrapMaterial { get; set; }
 
+        //[JsonIgnore]
         [NotMapped]
         [Display(Name = "File")]
         public IFormFile? FormFile { get; set; }

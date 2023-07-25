@@ -18,12 +18,10 @@ namespace WatchAPI.Controllers
 
         readonly IWatchRepository watchRepository;
 
-
         public WatchController(IWatchRepository _watchRepository)
         {
             this.watchRepository = _watchRepository;
         }
-
 
         //GET: api/<WatchController>
         [HttpGet]
@@ -34,17 +32,16 @@ namespace WatchAPI.Controllers
 
         // GET api/<WatchController>/5
         [HttpGet("{id}")]
-        public Task<IEnumerable<Watch>> Get(int id)
+        public ActionResult<Watch?> Get(int id)
         {
             return watchRepository.GetWatchById(id);
         }
-
+     
         // POST api/<WatchController>
         [HttpPost]
-        [Consumes("multipart/form-data")]
-        public void Post([FromForm] Watch watch)
+        public ActionResult<int> Post([FromForm] Watch watch)
         {
-            watchRepository.AddWatch(watch);
+            return watchRepository.AddWatch(watch);
         }
 
         // PUT api/<WatchController>/5
@@ -60,8 +57,6 @@ namespace WatchAPI.Controllers
         {
             watchRepository.DeleteWatch(id);
         }
-
-        
 
     }
 }

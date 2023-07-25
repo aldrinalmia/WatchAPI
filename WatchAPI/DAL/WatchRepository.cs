@@ -6,87 +6,90 @@ using Azure.Storage.Blobs;
 using Azure.Storage;
 using System.Net;
 using Microsoft.Extensions.Configuration;
+using System.Web.Http;
+using Microsoft.Build.Framework;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace WatchAPI.DAL
 {
     public class WatchRepository : IWatchRepository
     {
         private readonly WatchApiContext _context;
+        private readonly BlobServiceClient _filesContainer;
 
-        private readonly string _storageAccount = "tempstorage1989";
-        private readonly string? _key = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("AppSettings")["storageKey"];
-        private readonly BlobContainerClient _filesContainer;
-        private readonly string blobUrl = $"https://tempstorage1989.blob.core.windows.net/";
-        private readonly string containerName = "testcontainer";
 
-        public WatchRepository(WatchApiContext context)
+        public WatchRepository(WatchApiContext context, BlobServiceClient filesContainer)
         {
             _context = context;
-
-            var credential = new StorageSharedKeyCredential(_storageAccount, _key);
-            var blobServiceClient = new BlobServiceClient(new Uri(blobUrl), credential);
-            _filesContainer = blobServiceClient.GetBlobContainerClient(containerName);
+            _filesContainer = filesContainer;
         }
 
-  
 
         public async Task<IEnumerable<Watch>> GetWatch()
         {
-            return await _context.Watches.ToListAsync();
+            return await _context.Watches.OrderByDescending(x=>x.ID).ToListAsync();
         }
 
-        public async Task<IEnumerable<Watch>> GetWatchById(int id)
+        public ActionResult<Watch?> GetWatchById(int id)
         {
-            return await _context.Watches.Where(x => x.ID == id).ToListAsync();
+            return  _context.Watches.Where(x => x.ID == id).SingleOrDefault();
         }
 
-        public void AddWatch(Watch watch)
+        public ActionResult<int> AddWatch(Watch watch)
         {
             if (watch.FormFile is not null)
             {
+                var container = _filesContainer.GetBlobContainerClient("blobcontainer");
 
                 string prefix = DateTime.Now.ToString("yyyyMMddHHmmssfff");
                 string fileName = watch.FormFile.FileName;
 
-                BlobClient client = _filesContainer.GetBlobClient($"{prefix}{fileName}");
-
+                var client = container.GetBlobClient($"{prefix}{fileName}");
+    
                 using (Stream? data = watch.FormFile.OpenReadStream())
                 {
                     client.Upload(data);
                 }
 
-                string sUrl = blobUrl + containerName + $"/" + prefix + fileName;
+
+                string sUrl = client.Uri.ToString();
 
                 watch.URL = sUrl;
 
                 _context.Watches.Add(watch);
                 _context.SaveChanges();
+
             }
+            return watch.ID;
         }
 
         public void UpdateWatch(Watch watch)
         {
+
             if (watch.FormFile is not null)
             {
+                
+                var container = _filesContainer.GetBlobContainerClient("blobcontainer");
+
                 string prefix = DateTime.Now.ToString("yyyyMMddHHmmssfff");
                 string fileName = watch.FormFile.FileName;
 
-                BlobClient client = _filesContainer.GetBlobClient($"{prefix}{fileName}");
+                var client = container.GetBlobClient($"{prefix}{fileName}");
 
                 using (Stream? data = watch.FormFile.OpenReadStream())
                 {
                     client.Upload(data);
                 }
 
-
                 if (watch.URL is not null)
                 {
-                    string blobFilename = watch.URL.Remove(0, 60);
-                    BlobClient file = _filesContainer.GetBlobClient(blobFilename);
+                    string blobFilename = Path.GetFileName(watch.URL);
+                    var file = container.GetBlobClient(blobFilename);
                     file.Delete();
                 }
 
-                string sUrl = blobUrl + containerName + $"/" + prefix + fileName;
+                string sUrl = client.Uri.ToString();
 
                 watch.URL = sUrl;
             }
@@ -102,15 +105,15 @@ namespace WatchAPI.DAL
 
         public void DeleteWatch(int id)
         {
-
+            var container = _filesContainer.GetBlobContainerClient("blobcontainer");
             Watch? watch = _context.Watches.Find(id);
 
             if (watch is not null)
             {
                 if (watch.URL is not null)
                 {
-                    string blobFilename = watch.URL.Remove(0, 60);
-                    BlobClient file = _filesContainer.GetBlobClient(blobFilename);
+                    string blobFilename = Path.GetFileName(watch.URL);
+                    var file = container.GetBlobClient(blobFilename);
                     file.Delete();
                 }
 
@@ -119,7 +122,10 @@ namespace WatchAPI.DAL
             }
         }
 
-       
+        public async Task<IEnumerable<Watch>> GetSlide()
+        {
+            return await _context.Watches.ToListAsync();
+        }
     }
 }
 
