@@ -31,7 +31,7 @@ namespace WatchAPI.DAL
             return await _context.Watches.OrderByDescending(x=>x.ID).ToListAsync();
         }
 
-        public ActionResult<Watch?> GetWatchById(int id)
+        public ActionResult<Watch?> GetWatchById(int id)    
         {
             return  _context.Watches.Where(x => x.ID == id).SingleOrDefault();
         }
