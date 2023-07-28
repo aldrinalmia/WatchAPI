@@ -122,10 +122,7 @@ namespace WatchAPI.DAL
             }
         }
 
-        public async Task<IEnumerable<Watch>> GetSlide()
-        {
-            return await _context.Watches.ToListAsync();
-        }
+    
     }
 }
 
